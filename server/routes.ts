@@ -1,9 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { executionRequestSchema } from "@shared/schema";
+import { executionRequestSchema, insertSnippetSchema, type TerminalOutput } from "@shared/schema";
+import { storage } from "./storage";
 import { Worker } from "worker_threads";
 import { join } from "path";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "fs";
+import { z } from "zod";
 
 interface OutputItem {
   type: "log" | "error" | "warn" | "info" | "result";
@@ -414,6 +416,131 @@ export async function registerRoutes(
         output: [],
         executionTime: 0,
       });
+    }
+  });
+
+  app.get("/api/snippets", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const snippets = await storage.listSnippets(limit);
+      return res.json(snippets);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to fetch snippets" });
+    }
+  });
+
+  app.get("/api/snippets/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const snippet = id.length <= 12 
+        ? await storage.getSnippetByShortId(id)
+        : await storage.getSnippetById(parseInt(id));
+      
+      if (!snippet) {
+        return res.status(404).json({ error: "Snippet not found" });
+      }
+      return res.json(snippet);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to fetch snippet" });
+    }
+  });
+
+  app.post("/api/snippets", async (req, res) => {
+    try {
+      const parseResult = insertSnippetSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({
+          error: "Invalid snippet: " + parseResult.error.errors.map(e => e.message).join(", "),
+        });
+      }
+
+      const snippet = await storage.createSnippet(parseResult.data);
+      return res.status(201).json(snippet);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to create snippet" });
+    }
+  });
+
+  app.patch("/api/snippets/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const snippetId = parseInt(id);
+      
+      if (isNaN(snippetId)) {
+        return res.status(400).json({ error: "Invalid snippet ID" });
+      }
+
+      const snippet = await storage.updateSnippet(snippetId, req.body);
+      
+      if (!snippet) {
+        return res.status(404).json({ error: "Snippet not found" });
+      }
+      return res.json(snippet);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to update snippet" });
+    }
+  });
+
+  app.delete("/api/snippets/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const snippetId = parseInt(id);
+      
+      if (isNaN(snippetId)) {
+        return res.status(400).json({ error: "Invalid snippet ID" });
+      }
+
+      const deleted = await storage.deleteSnippet(snippetId);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Snippet not found" });
+      }
+      return res.status(204).send();
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to delete snippet" });
+    }
+  });
+
+  app.get("/api/history", async (req, res) => {
+    try {
+      const snippetId = req.query.snippetId ? parseInt(req.query.snippetId as string) : undefined;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const history = await storage.getExecutionHistory(snippetId, limit);
+      return res.json(history);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to fetch execution history" });
+    }
+  });
+
+  app.post("/api/history", async (req, res) => {
+    try {
+      const historySchema = z.object({
+        snippetId: z.number().optional(),
+        code: z.string(),
+        mode: z.string(),
+        output: z.array(z.object({
+          type: z.enum(["log", "error", "warn", "info", "result", "system"]),
+          content: z.string(),
+          timestamp: z.number(),
+        })),
+        executionTime: z.number().optional(),
+        success: z.boolean(),
+        error: z.string().optional(),
+      });
+
+      const parseResult = historySchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({
+          error: "Invalid history entry: " + parseResult.error.errors.map(e => e.message).join(", "),
+        });
+      }
+
+      const history = await storage.createExecutionHistory(parseResult.data as any);
+      return res.status(201).json(history);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to create history entry" });
     }
   });
 
