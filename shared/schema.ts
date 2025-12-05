@@ -1,5 +1,3 @@
-import { pgTable, text, serial, timestamp, varchar, integer, boolean, jsonb } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export type ExecutionMode = "nodejs" | "browser";
@@ -74,47 +72,39 @@ const user = {
 console.log("User info:", user);
 `;
 
-export const snippets = pgTable("snippets", {
-  id: serial("id").primaryKey(),
-  shortId: varchar("short_id", { length: 12 }).notNull().unique(),
-  title: varchar("title", { length: 255 }).notNull(),
-  code: text("code").notNull(),
-  mode: varchar("mode", { length: 20 }).notNull().default("nodejs"),
-  description: text("description"),
-  isPublic: boolean("is_public").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertSnippetSchema = createInsertSchema(snippets).omit({
-  id: true,
-  shortId: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertSnippetSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  code: z.string(),
+  mode: z.string().default("nodejs"),
+  description: z.string().optional(),
+  isPublic: z.boolean().default(true),
 });
 
 export type InsertSnippet = z.infer<typeof insertSnippetSchema>;
-export type Snippet = typeof snippets.$inferSelect;
 
-export const executionHistory = pgTable("execution_history", {
-  id: serial("id").primaryKey(),
-  snippetId: integer("snippet_id").references(() => snippets.id),
-  code: text("code").notNull(),
-  mode: varchar("mode", { length: 20 }).notNull(),
-  output: jsonb("output").notNull().$type<TerminalOutput[]>(),
-  executionTime: integer("execution_time"),
-  success: boolean("success").notNull(),
-  error: text("error"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export interface Snippet extends InsertSnippet {
+  id: string;
+  shortId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export const insertExecutionHistorySchema = createInsertSchema(executionHistory).omit({
-  id: true,
-  createdAt: true,
+export const insertExecutionHistorySchema = z.object({
+  snippetId: z.string().optional(), // Changed to string for ObjectId
+  code: z.string(),
+  mode: z.string(),
+  output: z.any(), // Keeping loose for now, can be TerminalOutput[]
+  executionTime: z.number().optional(),
+  success: z.boolean(),
+  error: z.string().optional(),
 });
 
 export type InsertExecutionHistory = z.infer<typeof insertExecutionHistorySchema>;
-export type ExecutionHistory = typeof executionHistory.$inferSelect;
+
+export interface ExecutionHistory extends InsertExecutionHistory {
+  id: string;
+  createdAt: Date;
+}
 
 export interface SnippetFile {
   name: string;
@@ -122,21 +112,17 @@ export interface SnippetFile {
   isEntryPoint: boolean;
 }
 
-export const snippetFiles = pgTable("snippet_files", {
-  id: serial("id").primaryKey(),
-  snippetId: integer("snippet_id").references(() => snippets.id).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  code: text("code").notNull(),
-  isEntryPoint: boolean("is_entry_point").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertSnippetFileSchema = createInsertSchema(snippetFiles).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertSnippetFileSchema = z.object({
+  snippetId: z.string(),
+  name: z.string(),
+  code: z.string(),
+  isEntryPoint: z.boolean().default(false),
 });
 
 export type InsertSnippetFile = z.infer<typeof insertSnippetFileSchema>;
-export type SnippetFileRecord = typeof snippetFiles.$inferSelect;
+
+export interface SnippetFileRecord extends InsertSnippetFile {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
