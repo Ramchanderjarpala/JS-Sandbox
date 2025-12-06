@@ -38,13 +38,6 @@ export default defineConfig(async ({ mode }) => {
     server: {
       port: 5173,
       host: "0.0.0.0",
-      proxy: {
-        "/api": {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-        },
-      },
       fs: {
         strict: true,
         deny: ["**/.*"],

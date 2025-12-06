@@ -45,8 +45,7 @@ export default function Playground() {
     const params = new URLSearchParams(window.location.search);
     const snippetId = params.get("s");
     if (snippetId) {
-      fetch(`/api/snippets/${snippetId}`)
-        .then((res) => res.json())
+      apiRequest("GET", `/api/snippets/${snippetId}`)
         .then((snippet) => {
           if (snippet && snippet.code) {
             setCode(snippet.code);
