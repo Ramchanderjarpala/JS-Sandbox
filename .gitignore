@@ -1,6 +1,18 @@
+# Dependencies
 node_modules
+
+# Build artifacts
 dist
-.DS_Store
 server/public
-vite.config.ts.*
+
+# System files
+.DS_Store
 *.tar.gz
+
+# Vite
+vite.config.ts.*
+
+# Environment variables
+.env
+client/.env
+server/.env
