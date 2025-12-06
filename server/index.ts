@@ -8,8 +8,14 @@ import { connectDB } from "./db";
 const app = express();
 const httpServer = createServer(app);
 
+
 // Enable CORS for frontend
-app.use(cors());
+app.use(cors(
+  {
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }
+));
 
 // Parse JSON bodies
 app.use(express.json());

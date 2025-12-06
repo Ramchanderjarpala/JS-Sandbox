@@ -1,4 +1,4 @@
-import { z } from "../../node_modules/zod/lib/index.js";
+import { z } from "zod";
 
 export type ExecutionMode = "nodejs" | "browser";
 
