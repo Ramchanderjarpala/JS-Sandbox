@@ -1,7 +1,6 @@
 {
   "include": [
-    "src/**/*",
-    "../shared/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -33,7 +32,7 @@
         "./src/*"
       ],
       "@shared/*": [
-        "../shared/*"
+        "./src/shared/*"
       ]
     }
   }

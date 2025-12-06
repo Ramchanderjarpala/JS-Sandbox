@@ -19,12 +19,14 @@ export default defineConfig({
       ]
       : []),
   ],
+  optimizeDeps: {
+    include: ["zod"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(process.cwd(), "src"),
-      "@shared": path.resolve(process.cwd(), "../shared"),
-      "@assets": path.resolve(process.cwd(), "../attached_assets"),
-      "zod": path.resolve(process.cwd(), "../node_modules/zod"),
+      "@shared": path.resolve(process.cwd(), "src/shared"),
+      "zod": path.resolve(process.cwd(), "node_modules/zod"),
     },
   },
   build: {

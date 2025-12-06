@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { defaultCode } from "@shared/schema";
+import { defaultCode } from "../shared/schema";
 
 const STORAGE_KEY = "js-playground-code";
 

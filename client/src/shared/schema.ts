@@ -72,57 +72,8 @@ const user = {
 console.log("User info:", user);
 `;
 
-export const insertSnippetSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  code: z.string(),
-  mode: z.string().default("nodejs"),
-  description: z.string().optional(),
-  isPublic: z.boolean().default(true),
-});
-
-export type InsertSnippet = z.infer<typeof insertSnippetSchema>;
-
-export interface Snippet extends InsertSnippet {
-  id: string;
-  shortId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export const insertExecutionHistorySchema = z.object({
-  snippetId: z.string().optional(), // Changed to string for ObjectId
-  code: z.string(),
-  mode: z.string(),
-  output: z.any(), // Keeping loose for now, can be TerminalOutput[]
-  executionTime: z.number().optional(),
-  success: z.boolean(),
-  error: z.string().optional(),
-});
-
-export type InsertExecutionHistory = z.infer<typeof insertExecutionHistorySchema>;
-
-export interface ExecutionHistory extends InsertExecutionHistory {
-  id: string;
-  createdAt: Date;
-}
-
 export interface SnippetFile {
   name: string;
   code: string;
   isEntryPoint: boolean;
-}
-
-export const insertSnippetFileSchema = z.object({
-  snippetId: z.string(),
-  name: z.string(),
-  code: z.string(),
-  isEntryPoint: z.boolean().default(false),
-});
-
-export type InsertSnippetFile = z.infer<typeof insertSnippetFileSchema>;
-
-export interface SnippetFileRecord extends InsertSnippetFile {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { EditorSettings, defaultEditorSettings } from "@shared/schema";
+import { EditorSettings, defaultEditorSettings } from "../shared/schema";
 
 const STORAGE_KEY = "js-playground-editor-settings";
 
