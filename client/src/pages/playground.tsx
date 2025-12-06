@@ -67,6 +67,8 @@ export default function Playground() {
     }
   }, [setCode, toast]);
 
+   
+
   const executeMutation = useMutation({
     mutationFn: async (payload: { code: string; mode: ExecutionMode }) => {
       const response = await apiRequest("POST", "/api/execute", payload);
